@@ -1,0 +1,27 @@
+{
+  "name": "wib-backend",
+  "version": "1.0.0",
+  "description": "WIB Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node bin/dev"
+  },
+  "repository": "https://github.com/dcDalin/wib-backend.git",
+  "author": "dc_dalin",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.1.6",
+    "dotenv": "^6.1.0",
+    "nodemon": "^1.18.7",
+    "standard": "^12.0.1"
+  },
+  "dependencies": {
+    "apollo-server-express": "^2.2.3",
+    "express": "^4.16.4",
+    "graphql": "^14.0.2",
+    "mongoose": "^5.3.14"
+  }
+}
