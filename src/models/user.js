@@ -3,9 +3,27 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    userName: String,
-    userEmail: String,
-    phoneNumber: String,
+    userName: {
+      type: String,
+      validate: {
+        validator: async userName => User.doesntExist({ userName }),
+        message: ({ value }) => `Username ${value} has already been taken.`
+      }
+    },
+    userEmail: {
+      type: String,
+      validate: {
+        validator: userEmail => User.doesntExist({ userEmail }),
+        message: ({ value }) => `Email ${value} has already been taken.`
+      }
+    },
+    phoneNumber: {
+      type: String,
+      validate: {
+        validator: phoneNumber => User.doesntExist({ phoneNumber }),
+        message: ({ value }) => `Phone Number ${value} already exists.`
+      }
+    },
     password: String
   },
   {
@@ -17,14 +35,15 @@ const userSchema = new mongoose.Schema(
 // refers to the user
 userSchema.pre('save', async function(next) {
   if (this.isModified('password')) {
-    try {
-      // args.password from our resolver
-      this.password = await hash(this.password, 10);
-    } catch (err) {
-      next(err);
-    }
+    // args.password from our resolver
+    this.password = await hash(this.password, 10);
   }
-  next();
 });
 
-export default mongoose.model('User', userSchema);
+userSchema.statics.doesntExist = async function(options) {
+  return (await this.where(options).countDocuments) === 0;
+};
+
+const User = mongoose.model('User', userSchema);
+
+export default User;
