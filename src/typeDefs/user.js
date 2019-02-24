@@ -6,20 +6,17 @@ export default gql`
     # Find one user by their id (must match exactly)
     user(id: ID!): User
     users: [User!]!
+    me: User
   }
   extend type Mutation {
-    signUp(
-      userName: String!
-      userEmail: String!
-      phoneNumber: String!
-      password: String!
-    ): User
+    signUp(userName: String!, phoneNumber: String!, password: String!): User
+    signIn(phoneNumber: String!, password: String!): User
+    signOut: Boolean
   }
   type User {
     # Get all users
     id: ID!
     userName: String!
-    userEmail: String!
     phoneNumber: String!
     createdAt: String!
   }

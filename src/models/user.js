@@ -1,4 +1,4 @@
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
@@ -8,13 +8,6 @@ const userSchema = new mongoose.Schema(
       validate: {
         validator: async userName => User.doesntExist({ userName }),
         message: ({ value }) => `Username ${value} has already been taken.`
-      }
-    },
-    userEmail: {
-      type: String,
-      validate: {
-        validator: userEmail => User.doesntExist({ userEmail }),
-        message: ({ value }) => `Email ${value} has already been taken.`
       }
     },
     phoneNumber: {
@@ -41,7 +34,11 @@ userSchema.pre('save', async function(next) {
 });
 
 userSchema.statics.doesntExist = async function(options) {
-  return (await this.where(options).countDocuments) === 0;
+  return (await this.where(options).countDocuments()) === 0;
+};
+
+userSchema.methods.matchesPassword = function(password) {
+  return compare(password, this.password);
 };
 
 const User = mongoose.model('User', userSchema);

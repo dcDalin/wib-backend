@@ -1,34 +1,89 @@
-import express from 'express'
-import mongoose from 'mongoose'
-import { ApolloServer } from 'apollo-server-express'
-import typeDefs from './typeDefs'
-import resolvers from './resolvers'
-import { APP_PORT, IN_PROD, DB_NAME, DB_PASSWORD, DB_HOST, DB_USERNAME, DB_PORT } from './config'
+import { ApolloServer } from 'apollo-server-express';
+import connectRedis from 'connect-redis';
+import express from 'express';
+import session from 'express-session';
+import mongoose from 'mongoose';
+import {
+  APP_PORT,
+  DB_HOST,
+  DB_NAME,
+  DB_PASSWORD,
+  DB_PORT,
+  DB_USERNAME,
+  IN_PROD,
+  REDIS_HOST,
+  REDIS_PASSWORD,
+  REDIS_PORT,
+  SESS_LIFETIME,
+  SESS_NAME,
+  SESS_SECRET
+} from './config';
+import resolvers from './resolvers';
+import typeDefs from './typeDefs';
 
 // Self invoking async function
 // (async() => {})()
 (async () => {
   try {
-    await mongoose.connect(`mongodb://${DB_USERNAME}:${encodeURIComponent(DB_PASSWORD)}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
-      useNewUrlParser: true // fixes deprication warning
-    })
+    await mongoose.connect(
+      `mongodb://${DB_USERNAME}:${encodeURIComponent(
+        DB_PASSWORD
+      )}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
+      {
+        useNewUrlParser: true // fixes deprication warning
+      }
+    );
 
-    const app = express()
+    const app = express();
 
-    app.disable('x-powered-by')
+    app.disable('x-powered-by');
+
+    const RedisStore = connectRedis(session);
+
+    const store = new RedisStore({
+      host: REDIS_HOST,
+      port: REDIS_PORT,
+      pass: REDIS_PASSWORD
+    });
+
+    app.use(
+      session({
+        store,
+        name: SESS_NAME,
+        secret: SESS_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+          maxAge: SESS_LIFETIME,
+          sameSite: true,
+          secure: IN_PROD,
+          expires: false
+        }
+      })
+    );
 
     const server = new ApolloServer({
       typeDefs,
       resolvers,
-      playground: !IN_PROD
-    })
+      cors: false,
+      playground: IN_PROD
+        ? false
+        : {
+            settings: {
+              'request.credentials': 'include'
+            }
+          },
+      context: ({ req, res }) => ({ req, res })
+    });
 
-    server.applyMiddleware({ app })// app is from an existing express app
+    server.applyMiddleware({ app }); // app is from an existing express app
 
     app.listen({ port: APP_PORT }, () =>
-      console.log(`🚀 Server ready at http://localhost:${APP_PORT}${server.graphqlPath}`)
-    )
+      console.log(
+        `🚀 Server ready at http://localhost:${APP_PORT}${server.graphqlPath}`
+      )
+    );
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
-})()
+})();
